@@ -72,6 +72,7 @@ export interface AmenityFilter {
 export type SortOption = "price_asc" | "price_desc" | "area_desc" | "newest";
 
 export interface ListingFilters {
+  city: string;                         // CitySlug — drives map center + API filter
   listing_type: ListingType | "all";
   property_type: PropertyType | "all";
   bhk: number | "all";

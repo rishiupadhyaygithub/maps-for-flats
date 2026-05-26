@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import { Search, SlidersHorizontal, X, ArrowUpDown } from "lucide-react";
 import type { ListingFilters, SortOption } from "@/lib/types";
+import { CITIES, CITY_SLUGS, type CitySlug } from "@/lib/utils";
 
 interface Props {
   filters: ListingFilters;
@@ -11,7 +12,8 @@ interface Props {
 }
 
 export const DEFAULT_FILTERS: ListingFilters = {
-  listing_type: "rent",   // default rent — 100% of data is rent
+  city: "mumbai",
+  listing_type: "rent",
   property_type: "all",
   bhk: "all",
   min_price: null,
@@ -59,7 +61,8 @@ export default function FilterBar({ filters, onChange, totalCount }: Props) {
   function reset() {
     setLocalLocality("");
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    onChange(DEFAULT_FILTERS);
+    // Reset filters but keep city
+    onChange({ ...DEFAULT_FILTERS, city: filters.city });
   }
 
   // Count active non-default filters
@@ -77,6 +80,26 @@ export default function FilterBar({ filters, onChange, totalCount }: Props) {
 
   return (
     <div className="bg-white border-b border-gray-200 shadow-sm">
+      {/* ── City picker ── */}
+      <div className="flex items-center gap-1 px-3 pt-2 pb-1 overflow-x-auto no-scrollbar border-b border-gray-100">
+        {CITY_SLUGS.map((slug) => (
+          <button
+            key={slug}
+            onClick={() => {
+              setLocalLocality("");
+              onChange({ ...DEFAULT_FILTERS, city: slug });
+            }}
+            className={`px-3 py-1 text-xs font-semibold rounded-full whitespace-nowrap transition-colors shrink-0 ${
+              filters.city === slug
+                ? "bg-violet-600 text-white"
+                : "text-gray-500 hover:bg-gray-100 border border-gray-200"
+            }`}
+          >
+            {CITIES[slug].label}
+          </button>
+        ))}
+      </div>
+
       {/* ── Top row ── */}
       <div className="flex items-center gap-2 px-3 py-2 flex-wrap">
 

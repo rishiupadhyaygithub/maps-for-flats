@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchListings } from "@/lib/supabase";
+import { CITIES, type CitySlug } from "@/lib/utils";
 
 const VALID_LISTING_TYPES = ["rent", "buy"] as const;
 const VALID_PROPERTY_TYPES = ["flat", "house", "villa", "plot", "pg"] as const;
 const VALID_FURNISHINGS = ["furnished", "semi-furnished", "unfurnished"] as const;
-const VALID_SOURCES = ["magicbricks", "99acres", "housing", "nobroker"] as const;
+const VALID_SOURCES = ["magicbricks", "99acres", "housing", "nobroker", "squareyards"] as const;
 const VALID_SORTS = ["newest", "price_asc", "price_desc", "area_desc"] as const;
+const VALID_CITIES = Object.keys(CITIES) as CitySlug[];
 
 function pick<T extends string>(val: string | null, allowed: readonly T[]): T | undefined {
   return allowed.includes(val as T) ? (val as T) : undefined;
@@ -18,8 +20,13 @@ export async function GET(req: NextRequest) {
   const minPriceRaw = Number(s.get("min_price"));
   const maxPriceRaw = Number(s.get("max_price"));
 
+  // Resolve city slug → Supabase dbName (e.g. "bangalore" → "Bangalore")
+  const citySlug = pick(s.get("city"), VALID_CITIES);
+  const cityDbName = citySlug ? CITIES[citySlug].dbName : undefined;
+
   try {
     const data = await fetchListings({
+      city: cityDbName,
       listing_type: pick(s.get("listing_type"), VALID_LISTING_TYPES),
       property_type: pick(s.get("property_type"), VALID_PROPERTY_TYPES),
       bhk: s.get("bhk") && bhkRaw > 0 ? bhkRaw : undefined,

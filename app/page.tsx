@@ -11,7 +11,7 @@ import CivicLayers from "@/components/Map/CivicLayers";
 import OfficeSearch, { type OfficeLocation } from "@/components/Map/OfficeSearch";
 import LoadingSpinner from "@/components/UI/LoadingSpinner";
 import { useShortlist } from "@/lib/shortlist";
-import { formatPrice, haversineMeters } from "@/lib/utils";
+import { formatPrice, haversineMeters, CITIES, type CitySlug } from "@/lib/utils";
 import { Heart } from "lucide-react";
 import { useMemo } from "react";
 
@@ -58,6 +58,17 @@ export default function HomePage() {
   // Stable ref to selected listing id — used inside async callbacks
   const selectedIdRef = useRef<string | null>(null);
   selectedIdRef.current = selectedListing?.id ?? null;
+
+  // ── Clear office + selection when city changes ─────────────────
+  const prevCityRef = useRef(filters.city);
+  useEffect(() => {
+    if (prevCityRef.current !== filters.city) {
+      prevCityRef.current = filters.city;
+      setOfficeLocation(null);
+      handleClose();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.city]);
 
   // ── Fetch listings ──────────────────────────────────────────────
   useEffect(() => {
@@ -160,7 +171,7 @@ export default function HomePage() {
         <div className="flex items-center gap-2">
           <span className="text-xl">🗺️</span>
           <span className="font-bold text-gray-900 text-base">Maps for Flats</span>
-          <span className="text-xs text-gray-400 hidden sm:inline">· Mumbai</span>
+          <span className="text-xs text-gray-400 hidden sm:inline">· {CITIES[filters.city as CitySlug]?.label ?? "India"}</span>
         </div>
         <div className="ml-auto flex items-center gap-3">
           {loadingAmenities && (
@@ -225,6 +236,7 @@ export default function HomePage() {
           )}
 
           <MapView
+            city={(filters.city as CitySlug) ?? "mumbai"}
             listings={displayedListings}
             amenities={selectedListing ? amenities : []}
             selectedListing={selectedListing}
@@ -252,7 +264,7 @@ export default function HomePage() {
                 : listings.length >= 500
                 ? "Showing first 500 — narrow your filters"
                 : officeLocation
-                  ? `${displayedListings.length} flats within ${officeRadius / 1000}km of ${officeLocation.name}`
+                  ? `${displayedListings.length} flats within ${officeRadius / 1000}km of ${officeLocation.name} · ${CITIES[filters.city as CitySlug]?.label}`
                   : filterSummary()
                     ? `${filterSummary()} · ${displayedListings.length} results`
                     : `${displayedListings.length} listings on map`}

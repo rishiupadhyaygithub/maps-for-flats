@@ -3,9 +3,10 @@
 import { useEffect, useRef } from "react";
 import type { Listing, Amenity, AmenityType } from "@/lib/types";
 import type { OfficeLocation } from "./OfficeSearch";
-import { priceMarkerColor, AMENITY_COLORS, AMENITY_ICONS, formatPrice } from "@/lib/utils";
+import { priceMarkerColor, AMENITY_COLORS, AMENITY_ICONS, formatPrice, CITIES, type CitySlug } from "@/lib/utils";
 
 interface Props {
+  city: CitySlug;
   listings: Listing[];
   amenities: Amenity[];
   selectedListing: Listing | null;
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export default function MapView({
+  city,
   listings,
   amenities,
   selectedListing,
@@ -70,9 +72,10 @@ export default function MapView({
         shadowUrl:     "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
       });
 
+      const cityConfig = CITIES[city] ?? CITIES.mumbai;
       const map = Lx.map(mapRef.current, {
-        center: [19.076, 72.8777],
-        zoom: 12,
+        center: cityConfig.center,
+        zoom: cityConfig.zoom,
         zoomControl: true,
       });
 
@@ -202,6 +205,14 @@ export default function MapView({
     );
   }, [selectedListing]);
 
+  // ── Re-centre when city changes ──────────────────────────────
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
+    const cfg = CITIES[city] ?? CITIES.mumbai;
+    mapInstanceRef.current.setView(cfg.center, cfg.zoom, { animate: true });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [city]);
+
   // ── Office pin + radius circle ────────────────────────────────
   useEffect(() => {
     if (!officeLayerRef.current) return;
@@ -261,8 +272,8 @@ export default function MapView({
       metroLayerRef.current.clearLayers();
       if (!showMetro) return;
 
-      // Lines
-      fetch("/data/metro_lines.geojson")
+      // Lines — city-specific file
+      fetch(`/data/metro_lines_${city}.geojson`)
         .then((r) => r.json())
         .then((geojson) => {
           if (!metroLayerRef.current) return;
@@ -286,8 +297,8 @@ export default function MapView({
           }).addTo(metroLayerRef.current);
         });
 
-      // Stations
-      fetch("/data/metro_stations.json")
+      // Stations — city-specific file
+      fetch(`/data/metro_stations_${city}.json`)
         .then((r) => r.json())
         .then((stations: Array<{ name: string; lat: number; lng: number; lines: string[] }>) => {
           if (!metroLayerRef.current) return;
@@ -309,7 +320,8 @@ export default function MapView({
           });
         });
     });
-  }, [showMetro]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showMetro, city]);
 
   return <div ref={mapRef} className="w-full h-full" />;
 }

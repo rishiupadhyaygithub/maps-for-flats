@@ -26,6 +26,7 @@ export async function upsertListings(listings: Omit<Listing, "id" | "created_at"
 }
 
 export async function fetchListings(filters: {
+  city?: string;
   listing_type?: string;
   property_type?: string;
   bhk?: number;
@@ -38,6 +39,9 @@ export async function fetchListings(filters: {
 }) {
   const supabase = getPublicClient();
   let query = supabase.from("listings").select("*");
+
+  if (filters.city)
+    query = query.ilike("city", filters.city);
 
   if (filters.listing_type && filters.listing_type !== "all")
     query = query.eq("listing_type", filters.listing_type);

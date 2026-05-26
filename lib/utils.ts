@@ -49,11 +49,24 @@ export const AMENITY_COLORS: Record<string, string> = {
   gym: "#ec4899",
 };
 
-// Mumbai bounding box — keeps map focused
-export const MUMBAI_BOUNDS = {
-  center: { lat: 19.076, lng: 72.8777 },
-  zoom: 12,
+export type CitySlug = "mumbai" | "delhi" | "pune" | "bangalore" | "hyderabad" | "kolkata" | "chennai";
+
+export const CITIES: Record<CitySlug, {
+  label:  string;
+  center: [number, number];
+  zoom:   number;
+  dbName: string;   // exact value stored in Supabase listings.city column
+}> = {
+  mumbai:    { label: "Mumbai",    center: [19.076,  72.877], zoom: 12, dbName: "Mumbai"    },
+  delhi:     { label: "Delhi/NCR", center: [28.614,  77.209], zoom: 11, dbName: "Delhi"     },
+  pune:      { label: "Pune",      center: [18.520,  73.857], zoom: 12, dbName: "Pune"      },
+  bangalore: { label: "Bangalore", center: [12.972,  77.595], zoom: 12, dbName: "Bangalore" },
+  hyderabad: { label: "Hyderabad", center: [17.385,  78.487], zoom: 12, dbName: "Hyderabad" },
+  kolkata:   { label: "Kolkata",   center: [22.573,  88.364], zoom: 12, dbName: "Kolkata"   },
+  chennai:   { label: "Chennai",   center: [13.083,  80.271], zoom: 12, dbName: "Chennai"   },
 };
+
+export const CITY_SLUGS = Object.keys(CITIES) as CitySlug[];
 
 export const SOURCE_LABELS: Record<string, string> = {
   magicbricks: "MagicBricks",

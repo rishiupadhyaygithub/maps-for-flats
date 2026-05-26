@@ -1,11 +1,14 @@
 """
-Square Yards Mumbai Scraper — parses schema.org JSON-LD (no browser needed)
+Square Yards Multi-City Scraper — parses schema.org JSON-LD (no browser needed)
 Square Yards embeds structured listing data directly in HTML — reliable, fast.
 
 Usage:
-    python3 scraper.py
-    python3 scraper.py --pages 5 --output mumbai_flats.csv
-    python3 scraper.py --debug
+    python3 scraper.py                                   # Mumbai, 5 pages
+    python3 scraper.py --city delhi --pages 10
+    python3 scraper.py --city bangalore --pages 8
+    python3 scraper.py --debug --city hyderabad
+
+Supported cities: mumbai, delhi, pune, bangalore, hyderabad, kolkata, chennai
 """
 
 import csv
@@ -25,10 +28,36 @@ _SSL = ssl.create_default_context()
 _SSL.check_hostname = False
 _SSL.verify_mode = ssl.CERT_NONE
 
-# ── Config ─────────────────────────────────────────────────────────────────────
+# ── City URL slugs on Square Yards ─────────────────────────────────────────────
+CITY_URL_SLUGS = {
+    "mumbai":    "mumbai",
+    "delhi":     "delhi",
+    "noida":     "noida",
+    "gurgaon":   "gurgaon",
+    "pune":      "pune",
+    "bangalore": "bangalore",
+    "hyderabad": "hyderabad",
+    "kolkata":   "kolkata",
+    "chennai":   "chennai",
+}
 
-BASE_URL    = "https://www.squareyards.com/rent/property-for-rent-in-mumbai"
-OUTPUT_FILE = "mumbai_flats.csv"
+# Supabase city name (must match CITIES[slug].dbName in utils.ts)
+CITY_DB_NAMES = {
+    "mumbai":    "Mumbai",
+    "delhi":     "Delhi",
+    "noida":     "Delhi",    # Noida → stored as Delhi (same metro, same city filter)
+    "gurgaon":   "Delhi",
+    "pune":      "Pune",
+    "bangalore": "Bangalore",
+    "hyderabad": "Hyderabad",
+    "kolkata":   "Kolkata",
+    "chennai":   "Chennai",
+}
+
+# Config built at runtime from --city arg
+BASE_URL      = ""
+OUTPUT_FILE   = ""
+_CITY_DB_NAME = "Mumbai"   # overridden by __main__
 
 HEADERS = {
     "User-Agent": (
@@ -231,7 +260,7 @@ def parse_page(html: str) -> list[dict]:
         listings.append({
             "source":          "squareyards",
             "locality":        locality,
-            "city":            "Mumbai",
+            "city":            _CITY_DB_NAME,
             "bhk":             bhk,
             "price":           price,
             "price_unit":      "per_month",
@@ -310,11 +339,23 @@ def scrape(pages: int, output: str) -> None:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Square Yards Mumbai scraper")
+    parser = argparse.ArgumentParser(description="Square Yards multi-city scraper")
+    parser.add_argument("--city",   default="mumbai", choices=list(CITY_URL_SLUGS.keys()),
+                        help="City to scrape (default: mumbai)")
     parser.add_argument("--pages",  type=int, default=5, help="Pages to scrape (each ~20 listings)")
-    parser.add_argument("--output", default=OUTPUT_FILE)
+    parser.add_argument("--output", default=None, help="CSV output filename")
     parser.add_argument("--debug",  action="store_true", help="Print first page schema.org blobs")
     args = parser.parse_args()
+
+    city_slug = args.city
+    url_slug  = CITY_URL_SLUGS[city_slug]
+    import sys as _sys
+    # Update module-level globals used by parse_page + scrape
+    _this = _sys.modules[__name__]
+    _this.BASE_URL      = f"https://www.squareyards.com/rent/property-for-rent-in-{url_slug}"
+    _this._CITY_DB_NAME = CITY_DB_NAMES[city_slug]
+    BASE_URL = _this.BASE_URL
+    output   = args.output or f"{city_slug}_flats.csv"
 
     if args.debug:
         html = fetch_html(BASE_URL)
@@ -326,8 +367,9 @@ if __name__ == "__main__":
             print(json.dumps(l, indent=2))
         raise SystemExit(0)
 
-    print(f"\n🏠 Square Yards Mumbai Scraper")
+    print(f"\n🏠 Square Yards Scraper — {CITY_DB_NAMES[city_slug]}")
+    print(f"   URL    : {BASE_URL}")
     print(f"   Pages  : {args.pages} (~{args.pages * 20} listings)")
-    print(f"   Output : {args.output}\n")
+    print(f"   Output : {output}\n")
 
-    scrape(args.pages, args.output)
+    scrape(args.pages, output)
