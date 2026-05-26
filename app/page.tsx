@@ -80,11 +80,12 @@ export default function HomePage() {
   const selectedIdRef = useRef<string | null>(null);
   selectedIdRef.current = selectedListing?.id ?? null;
 
-  // ── Clear office + selection when city changes ─────────────────
+  // ── Clear office + selection + stale listings when city changes ─
   const prevCityRef = useRef(filters.city);
   useEffect(() => {
     if (prevCityRef.current !== filters.city) {
       prevCityRef.current = filters.city;
+      setListings([]);       // wipe old city markers immediately
       setOfficeLocation(null);
       handleClose();
     }

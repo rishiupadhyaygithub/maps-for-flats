@@ -41,6 +41,10 @@ export default function MapView({
   const officeLayerRef  = useRef<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const metroLayerRef   = useRef<any>(null);
+  // Track last city for which we ran fitBounds — only fit on city change
+  const lastFitCityRef  = useRef<string>("");
+  const cityRef         = useRef(city);
+  cityRef.current = city;
 
   // Keep stable ref so map click handler always has latest callback
   const onDeselectRef = useRef(onDeselect);
@@ -150,8 +154,9 @@ export default function MapView({
           .addTo(markersLayerRef.current);
       });
 
-      // Fit bounds to current result set
-      if (listings.length > 0 && mapInstanceRef.current) {
+      // Fit bounds only when city changes — not on every filter/locality update
+      if (listings.length > 0 && mapInstanceRef.current && lastFitCityRef.current !== cityRef.current) {
+        lastFitCityRef.current = cityRef.current;
         const bounds = Lx.latLngBounds(listings.map((l: Listing) => [l.lat, l.lng]));
         mapInstanceRef.current.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
       }
