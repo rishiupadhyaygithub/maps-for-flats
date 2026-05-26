@@ -66,6 +66,8 @@ export const CITIES: Record<CitySlug, {
   chennai:   { label: "Chennai",   center: [13.083,  80.271], zoom: 12, dbName: "Chennai"   },
 };
 
+// Only cities with real listing data — add more as scraped
+export const ACTIVE_CITY_SLUGS: CitySlug[] = ["mumbai", "delhi", "bangalore"];
 export const CITY_SLUGS = Object.keys(CITIES) as CitySlug[];
 
 export const SOURCE_LABELS: Record<string, string> = {

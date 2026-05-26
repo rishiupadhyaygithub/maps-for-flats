@@ -12,7 +12,7 @@ import OfficeSearch, { type OfficeLocation } from "@/components/Map/OfficeSearch
 import LoadingSpinner from "@/components/UI/LoadingSpinner";
 import { useShortlist } from "@/lib/shortlist";
 import { formatPrice, haversineMeters, CITIES, type CitySlug } from "@/lib/utils";
-import { Heart } from "lucide-react";
+import { Heart, Share2 } from "lucide-react";
 import { useMemo } from "react";
 
 const MapView = dynamic(() => import("@/components/Map/MapView"), {
@@ -52,6 +52,27 @@ export default function HomePage() {
       (l) => haversineMeters(l.lat, l.lng, officeLocation.lat, officeLocation.lng) <= officeRadius
     );
   }, [listings, officeLocation, officeRadius]);
+
+  // ── Deep-link: ?listing=<id> opens panel on load ──────────────
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("listing");
+    if (!id) return;
+    // Wait for listings to load, then select matching one
+    const unsub = setInterval(() => {
+      setListings((current) => {
+        const match = current.find((l) => l.id === id);
+        if (match) {
+          clearInterval(unsub);
+          handleSelectListing(match);
+        }
+        return current;
+      });
+    }, 300);
+    setTimeout(() => clearInterval(unsub), 10000); // give up after 10s
+    return () => clearInterval(unsub);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Track in-flight amenity request so we can abort on new selection
   const amenityAbortRef = useRef<AbortController | null>(null);
@@ -170,8 +191,10 @@ export default function HomePage() {
       <header className="bg-white border-b border-gray-200 px-4 py-2.5 flex items-center gap-3 shrink-0 z-30">
         <div className="flex items-center gap-2">
           <span className="text-xl">🗺️</span>
-          <span className="font-bold text-gray-900 text-base">Maps for Flats</span>
-          <span className="text-xs text-gray-400 hidden sm:inline">· {CITIES[filters.city as CitySlug]?.label ?? "India"}</span>
+          <div>
+            <span className="font-bold text-gray-900 text-base">Maps for Flats</span>
+            <span className="hidden sm:inline text-xs text-gray-400 ml-1.5">· Find your next home on a map</span>
+          </div>
         </div>
         <div className="ml-auto flex items-center gap-3">
           {loadingAmenities && (

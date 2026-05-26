@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { Search, SlidersHorizontal, X, ArrowUpDown } from "lucide-react";
 import type { ListingFilters, SortOption } from "@/lib/types";
-import { CITIES, CITY_SLUGS, type CitySlug } from "@/lib/utils";
+import { CITIES, CITY_SLUGS, ACTIVE_CITY_SLUGS, type CitySlug } from "@/lib/utils";
 
 interface Props {
   filters: ListingFilters;
@@ -82,7 +82,7 @@ export default function FilterBar({ filters, onChange, totalCount }: Props) {
     <div className="bg-white border-b border-gray-200 shadow-sm">
       {/* ── City picker ── */}
       <div className="flex items-center gap-1 px-3 pt-2 pb-1 overflow-x-auto no-scrollbar border-b border-gray-100">
-        {CITY_SLUGS.map((slug) => (
+        {ACTIVE_CITY_SLUGS.map((slug) => (
           <button
             key={slug}
             onClick={() => {
@@ -98,6 +98,7 @@ export default function FilterBar({ filters, onChange, totalCount }: Props) {
             {CITIES[slug].label}
           </button>
         ))}
+        <span className="text-[10px] text-gray-300 pl-1 whitespace-nowrap shrink-0">+ more cities soon</span>
       </div>
 
       {/* ── Top row ── */}

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import {
   X, ExternalLink, MapPin, Building2, Layers,
-  Sofa, Maximize2, ChevronLeft, ChevronRight, Loader2, Heart,
+  Sofa, Maximize2, ChevronLeft, ChevronRight, Loader2, Heart, Share2, Check,
 } from "lucide-react";
 import { useShortlist } from "@/lib/shortlist";
 import type { Listing, Amenity, AmenityType } from "@/lib/types";
@@ -49,8 +49,17 @@ export default function PropertyPanel({
   const [tab, setTab] = useState<Tab>("details");
   const [imgIndex, setImgIndex] = useState(0);
   const [imgError, setImgError] = useState(false);
+  const [copied, setCopied] = useState(false);
   const { toggle, isShortlisted } = useShortlist();
   const saved = isShortlisted(listing.id);
+
+  function handleShare() {
+    const url = `${window.location.origin}/?listing=${listing.id}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
 
   useEffect(() => {
     setTab("details");
@@ -136,6 +145,13 @@ export default function PropertyPanel({
           title={saved ? "Remove from shortlist" : "Add to shortlist"}
         >
           <Heart size={16} fill={saved ? "white" : "none"} />
+        </button>
+        <button
+          onClick={handleShare}
+          className="absolute top-3 right-12 bg-black/40 text-white rounded-full p-1.5 hover:bg-black/60 z-10 transition-colors"
+          title="Copy share link"
+        >
+          {copied ? <Check size={16} className="text-green-300" /> : <Share2 size={16} />}
         </button>
         <button
           onClick={onClose}
