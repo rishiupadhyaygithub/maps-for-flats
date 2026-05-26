@@ -11,6 +11,16 @@ interface Props {
   totalCount: number;
 }
 
+const LOCALITY_HINTS: Record<string, string> = {
+  mumbai:    "Bandra, Andheri, Powai…",
+  delhi:     "Saket, Vasant Vihar, Dwarka…",
+  bangalore: "Whitefield, Indiranagar, HSR…",
+  pune:      "Koregaon Park, Baner…",
+  hyderabad: "Banjara Hills, Jubilee Hills…",
+  kolkata:   "Salt Lake, Ballygunge…",
+  chennai:   "Anna Nagar, Adyar…",
+};
+
 export const DEFAULT_FILTERS: ListingFilters = {
   city: "mumbai",
   listing_type: "rent",
@@ -109,7 +119,7 @@ export default function FilterBar({ filters, onChange, totalCount }: Props) {
           <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
-            placeholder="Locality…"
+            placeholder={LOCALITY_HINTS[filters.city] ?? "Locality…"}
             value={localLocality}
             onChange={(e) => handleLocalityChange(e.target.value)}
             className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-violet-400"

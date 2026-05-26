@@ -43,27 +43,37 @@ def load_service_key() -> str:
 # ── Geocoder ───────────────────────────────────────────────────────────────────
 
 _geo_cache: dict[str, tuple[float, float]] = {}
-MUMBAI_CENTER = (19.076, 72.8777)
+CITY_CENTERS: dict[str, tuple[float, float]] = {
+    "Mumbai":    (19.076,  72.8777),
+    "Delhi":     (28.614,  77.2090),
+    "Bangalore": (12.972,  77.5950),
+    "Pune":      (18.520,  73.8570),
+    "Hyderabad": (17.385,  78.4870),
+    "Kolkata":   (22.573,  88.3640),
+    "Chennai":   (13.083,  80.2710),
+}
 
 
-def geocode(locality: str) -> tuple[float, float]:
-    if locality in _geo_cache:
-        return _geo_cache[locality]
-    q = quote(f"{locality}, Mumbai, India")
+def geocode(locality: str, city: str = "Mumbai") -> tuple[float, float]:
+    cache_key = f"{locality}::{city}"
+    if cache_key in _geo_cache:
+        return _geo_cache[cache_key]
+    q = quote(f"{locality}, {city}, India")
     url = f"https://nominatim.openstreetmap.org/search?q={q}&format=json&limit=1"
+    fallback = CITY_CENTERS.get(city, (19.076, 72.8777))
     try:
-        req = Request(url, headers={"User-Agent": "mumbai-flats-importer/1.0"})
+        req = Request(url, headers={"User-Agent": "maps-for-flats-importer/1.0"})
         with urlopen(req, timeout=8) as r:
             data = json.loads(r.read())
         if data:
             lat, lng = float(data[0]["lat"]), float(data[0]["lon"])
-            _geo_cache[locality] = (lat, lng)
+            _geo_cache[cache_key] = (lat, lng)
             time.sleep(1.1)  # Nominatim rate limit: 1 req/sec
             return lat, lng
     except Exception as e:
         print(f"    ⚠ Geocode failed for '{locality}': {e}")
-    _geo_cache[locality] = MUMBAI_CENTER
-    return MUMBAI_CENTER
+    _geo_cache[cache_key] = fallback
+    return fallback
 
 
 # ── Row builder ────────────────────────────────────────────────────────────────
@@ -74,6 +84,7 @@ def build_listing(row: dict) -> dict:
     ).strip().split(",")[0]
 
     # Use exact coords from scraper if available; only geocode if missing
+    city_name = row.get("city", "Mumbai")
     row_lat = row.get("lat")
     row_lng = row.get("lng")
     location_exact = str(row.get("location_exact", "")).lower() == "true"
@@ -81,10 +92,10 @@ def build_listing(row: dict) -> dict:
         try:
             lat, lng = float(row_lat), float(row_lng)
         except (ValueError, TypeError):
-            lat, lng = geocode(locality)
+            lat, lng = geocode(locality, city_name)
             location_exact = False
     else:
-        lat, lng = geocode(locality)
+        lat, lng = geocode(locality, city_name)
         location_exact = False
 
     url = (row.get("url") or "").strip()
@@ -117,7 +128,7 @@ def build_listing(row: dict) -> dict:
         "floor": int(floor_raw) if floor_raw else None,
         "total_floors": int(tf_raw) if tf_raw else None,
         "locality": locality,
-        "city": "Mumbai",
+        "city": row.get("city", "Mumbai"),
         "lat": lat,
         "lng": lng,
         "images": [],

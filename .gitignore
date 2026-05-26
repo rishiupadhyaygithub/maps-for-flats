@@ -39,3 +39,18 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# python
+__pycache__/
+*.pyc
+*.pyo
+
+# scraper outputs & caches
+*.csv
+seen_listings.json
+python/metro_raw.json
+python/debug_page.html
+python/scored_flats.csv
+
+# claude
+.claude/

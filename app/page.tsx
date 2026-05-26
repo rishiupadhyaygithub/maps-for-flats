@@ -275,6 +275,7 @@ export default function HomePage() {
           <OfficeSearch
             location={officeLocation}
             radius={officeRadius}
+            city={filters.city ?? "mumbai"}
             onLocate={setOfficeLocation}
             onClear={() => setOfficeLocation(null)}
             onRadiusChange={setOfficeRadius}

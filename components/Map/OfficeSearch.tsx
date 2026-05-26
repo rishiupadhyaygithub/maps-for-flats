@@ -12,6 +12,7 @@ export interface OfficeLocation {
 interface Props {
   location: OfficeLocation | null;
   radius: number;
+  city: string;
   onLocate: (loc: OfficeLocation) => void;
   onClear: () => void;
   onRadiusChange: (r: number) => void;
@@ -24,7 +25,7 @@ const RADII = [
   { label: "10 km", value: 10000 },
 ];
 
-export default function OfficeSearch({ location, radius, onLocate, onClear, onRadiusChange }: Props) {
+export default function OfficeSearch({ location, radius, city, onLocate, onClear, onRadiusChange }: Props) {
   const [query, setQuery]   = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError]   = useState<string | null>(null);
@@ -36,7 +37,7 @@ export default function OfficeSearch({ location, radius, onLocate, onClear, onRa
     setLoading(true);
     setError(null);
     try {
-      const res  = await fetch(`/api/geocode?q=${encodeURIComponent(q)}`);
+      const res  = await fetch(`/api/geocode?q=${encodeURIComponent(q)}&city=${encodeURIComponent(city)}`);
       const data = await res.json();
       if (!Array.isArray(data) || data.length === 0) {
         setError("Not found — try a more specific name");
